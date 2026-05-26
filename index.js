@@ -16,6 +16,51 @@ client.once('ready', () => {
   console.log(`🎮 Spreman za rad na serveru!`);
 });
 
+client.on('messageCreate', async (message) => {
+  // Ignoriši poruke od bota
+  if (message.author.bot) return;
+
+  // !test komanda - testira welcome embed
+  if (message.content === '!test') {
+    try {
+      const welcomeChannelId = process.env.WELCOME_CHANNEL_ID;
+      const welcomeChannel = await client.channels.fetch(welcomeChannelId);
+
+      if (!welcomeChannel || !welcomeChannel.isTextBased()) {
+        return message.reply('❌ Welcome kanal nije pronađen!');
+      }
+
+      // Kreiraj isti embed kao za nove članove
+      const testEmbed = new EmbedBuilder()
+        .setColor('#0099ff')
+        .setTitle(`🎉 Dobrodošao/dobrodošla ${message.author.username}!`)
+        .setDescription(`Veoma nam je drago što si se pridružio/la našoj zajednici!`)
+        .addFields(
+          { name: '👤 Korisničko ime', value: message.author.username, inline: true },
+          { name: '🎫 Discord tag', value: message.author.tag, inline: true },
+          { name: '📅 Account kreiran', value: `<t:${Math.floor(message.author.createdTimestamp / 1000)}:d>`, inline: true },
+          { name: '🎪 Serverski članu od', value: `<t:${Math.floor(message.member.joinedTimestamp / 1000)}:d>`, inline: true },
+          { name: '👥 Broj članova na serveru', value: `${message.guild.memberCount}`, inline: true },
+          { name: '💬 Pogledaj pravila', value: 'Obavezno pročitaj pravila server-a!', inline: false }
+        )
+        .setThumbnail(message.author.displayAvatarURL({ dynamic: true }))
+        .setFooter({ text: `ID: ${message.author.id}` })
+        .setTimestamp();
+
+      // Pošalji embed u welcome kanal
+      await welcomeChannel.send({ embeds: [testEmbed] });
+      
+      // Odgovori korisniku
+      await message.reply('✅ Welcome embed je poslan u ' + welcomeChannel.toString() + '!');
+      
+      console.log(`✅ Test embed poslan od ${message.author.tag}`);
+    } catch (error) {
+      console.error('❌ Greška pri slanju test embeda:', error);
+      message.reply('❌ Došlo je do greške!');
+    }
+  }
+});
+
 client.on('guildMemberAdd', async (member) => {
   try {
     // Dobijanje kanala za tag
